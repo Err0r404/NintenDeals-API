@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Artisan;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,48 +14,54 @@ use Illuminate\Support\Facades\Cache;
 |
 */
 
-$router->get('/', function () use ($router) {
+$router->get('/', 'Controller@index');
+
+$router->get('/info', function () use ($router) {
     return $router->app->version();
 });
 
-$router->get('/flush', function () use ($router) {
-    Cache::flush();
-});
+$router->group(['prefix' => 'api'], function () use ($router) {
+    $router->get('/clear-cache', function (){
+        return Artisan::call('cache:clear');
+    });
 
-$router->get('getAmericaGames/{limit:[0-9]*}/{offset:[0-9]*}', function ($limit, $offset) {
-    $limit  = (int)$limit;
-    $offset = (int)$offset;
+    $router->get('getAmericaGames/{limit:[0-9]*}/{offset:[0-9]*}', function ($limit, $offset) {
+        $limit  = (int)$limit;
+        $offset = (int)$offset;
+        
+        $nin = new \App\Http\Controllers\NintenDealsController();
+        
+        return response()->json($nin->getAmericaGames(["limit" => (int)$limit], (int)$offset));
+    });
     
-    $nin = new \App\Http\Controllers\NintenDealsController();
+    $router->get('getJapanGames', function () {
+        $nin = new \App\Http\Controllers\NintenDealsController();
+        
+        return response()->json($nin->getJapanGames());
+    });
     
-    return response()->json($nin->getAmericaGames(["limit" => (int)$limit], (int)$offset));
-});
-
-$router->get('getJapanGames', function () {
-    $nin = new \App\Http\Controllers\NintenDealsController();
-
-    return response()->json($nin->getJapanGames());
-});
-
-$router->get('getEuropeGames/{limit:[0-9]*}/{offset:[0-9]*}', function ($limit, $offset) {
-    $limit  = (int)$limit;
-    $offset = (int)$offset;
-
-    $nin = new \App\Http\Controllers\NintenDealsController();
-
-    return response()->json($nin->getEuropeGames(["limit" => (int)$limit], (int)$offset));
-});
-
-$router->get('getPrices/{country:[a-zA-Z]{2}}/{gameIds:[0-9\,]*}/{offset:[0-9]*}', function ($country, $gameIds, $offset) {
-    $nin = new \App\Http\Controllers\NintenDealsController();
+    $router->get('getEuropeGames/{limit:[0-9]*}/{offset:[0-9]*}', function ($limit, $offset) {
+        $limit  = (int)$limit;
+        $offset = (int)$offset;
+        
+        $nin = new \App\Http\Controllers\NintenDealsController();
+        
+        return response()->json($nin->getEuropeGames(["limit" => (int)$limit], (int)$offset));
+    });
     
-    return response()->json($nin->getPrices(strtoupper($country), explode(",", $gameIds), $offset));
+    $router->get('getPrices/{country:[a-zA-Z]{2}}/{gameIds:[0-9\,]*}/{offset:[0-9]*}', function ($country, $gameIds, $offset) {
+        $nin = new \App\Http\Controllers\NintenDealsController();
+        
+        return response()->json($nin->getPrices(strtoupper($country), explode(",", $gameIds), $offset));
+    });
+    
+    $router->get('getMetacriticScores/{title}', function ($title) {
+        $nin = new \App\Http\Controllers\NintenDealsController();
+        
+        return response()->json($nin->getMetacriticScores($title));
+    });
+
 });
 
-$router->get('getMetacriticScores/{title}', function ($title) {
-    $nin = new \App\Http\Controllers\NintenDealsController();
-    
-    return response()->json($nin->getMetacriticScores($title));
-});
 
 
